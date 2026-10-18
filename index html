@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerRoutine - Mi Rutina</title>
+    <!-- Fuentes y librería de Confeti -->
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Archivo CSS separado -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <header>
+        <div class="logo">🔥 POWER ROUTINE</div>
+        <div class="streak-badge">
+            <span class="fire-icon">🔥</span>
+            <span id="streak-counter">0</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Tarjeta de Rango de Disciplina -->
+        <div class="rank-card">
+            <div>
+                <div class="rank-title">Rango de Disciplina</div>
+                <div class="rank-name" id="rank-display">Iniciado 🔥</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="rank-title">Estado Hoy</div>
+                <div id="today-status" style="color: #ff5500; font-weight: bold;">Pendiente</div>
+            </div>
+        </div>
+
+        <!-- Sección de Mis Rutinas -->
+        <div class="routines-header">
+            <span class="sub-label">Mis Rutinas</span>
+            <button class="btn-new-routine" onclick="createRoutine()">+ Nueva Rutina</button>
+        </div>
+        <div class="routines-bar" id="routines-list"></div>
+
+        <!-- Selector de Días de la semana -->
+        <div class="days-selector" id="days-bar"></div>
+
+        <!-- Panel de Ejercicios del Día -->
+        <div class="workout-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" id="day-title">Lunes</h2>
+                    <input type="text" id="focus-input" placeholder="Ej. Pecho + Tríceps..." onchange="saveDayFocus(this.value)">
+                </div>
+            </div>
+
+            <div class="exercise-list" id="exercise-list"></div>
+
+            <button class="btn-add" onclick="addExercise()">+ Añadir Ejercicio</button>
+
+            <button class="btn-finish-day" id="btn-finish" onclick="finishDay()">¡TERMINAR DÍA Y SUMAR FUEGUITO! 🔥</button>
+        </div>
+    </main>
+
+    <!-- Temporizador flotante de descanso -->
+    <div class="timer-widget">
+        <div>
+            <div class="timer-label">Descanso</div>
+            <div class="timer-display" id="timer-display">00:60</div>
+        </div>
+        <button class="timer-btn" onclick="startRestTimer(60)">60s</button>
+        <button class="timer-btn" onclick="startRestTimer(90)">90s</button>
+    </div>
+
+    <!-- Archivo JavaScript separado -->
+    <script src="script.js"></script>
+</body>
+</html>
