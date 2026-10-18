@@ -1,1 +1,203 @@
+const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+let activeRoutineId = 'default';
+let activeDayIndex = 0;
+let timerInterval = null;
 
+// Cargar o Inicializar Datos
+let data = JSON.parse(localStorage.getItem('power_routine_data')) || {
+    streak: 0,
+    lastCompletedDate: null,
+    routines: {
+        'default': {
+            name: 'Rutina Principal',
+            weekly: DAYS.map(d => ({ focus: '', exercises: [] }))
+        }
+    }
+};
+
+function saveData() {
+    localStorage.setItem('power_routine_data', JSON.stringify(data));
+}
+
+function init() {
+    renderStreak();
+    renderRoutinesBar();
+    renderDaysBar();
+    renderWorkoutDay();
+    checkTodayStatus();
+}
+
+function renderStreak() {
+    document.getElementById('streak-counter').innerText = data.streak;
+    
+    let rank = "Iniciado 🔥";
+    if (data.streak >= 3) rank = "Guerrero Constante ⚔️";
+    if (data.streak >= 7) rank = "Llama Ardiente ⚡";
+    if (data.streak >= 15) rank = "Maestro de Disciplina 🛡️";
+    if (data.streak >= 30) rank = "Bestia Imparable 👑";
+    if (data.streak >= 50) rank = "Leyenda de Fuego 🌋";
+    
+    document.getElementById('rank-display').innerText = rank;
+}
+
+function checkTodayStatus() {
+    const todayStr = new Date().toDateString();
+    const btn = document.getElementById('btn-finish');
+    const status = document.getElementById('today-status');
+
+    if (data.lastCompletedDate === todayStr) {
+        btn.disabled = true;
+        btn.innerText = "¡DÍA COMPLETADO! 🔥";
+        status.innerText = "Completado";
+        status.style.color = "#00ff88";
+    } else {
+        btn.disabled = false;
+        btn.innerText = "¡TERMINAR DÍA Y SUMAR FUEGUITO! 🔥";
+        status.innerText = "Pendiente";
+        status.style.color = "#ff5500";
+    }
+}
+
+function renderRoutinesBar() {
+    const container = document.getElementById('routines-list');
+    container.innerHTML = '';
+    
+    Object.keys(data.routines).forEach(id => {
+        const btn = document.createElement('button');
+        btn.className = `btn-routine ${id === activeRoutineId ? 'active' : ''}`;
+        btn.innerText = data.routines[id].name;
+        btn.onclick = () => {
+            activeRoutineId = id;
+            renderRoutinesBar();
+            renderWorkoutDay();
+        };
+        container.appendChild(btn);
+    });
+}
+
+function createRoutine() {
+    const name = prompt('Nombre de la nueva rutina (Ej. Pliometría, Fuerza...):');
+    if (!name) return;
+    const id = 'rot_' + Date.now();
+    data.routines[id] = {
+        name: name,
+        weekly: DAYS.map(d => ({ focus: '', exercises: [] }))
+    };
+    activeRoutineId = id;
+    saveData();
+    renderRoutinesBar();
+    renderWorkoutDay();
+}
+
+function renderDaysBar() {
+    const container = document.getElementById('days-bar');
+    container.innerHTML = '';
+
+    DAYS.forEach((day, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `day-btn ${idx === activeDayIndex ? 'active' : ''}`;
+        btn.innerText = day.substring(0, 3);
+        btn.onclick = () => {
+            activeDayIndex = idx;
+            renderDaysBar();
+            renderWorkoutDay();
+        };
+        container.appendChild(btn);
+    });
+}
+
+function renderWorkoutDay() {
+    const dayData = data.routines[activeRoutineId].weekly[activeDayIndex];
+    document.getElementById('day-title').innerText = DAYS[activeDayIndex];
+    document.getElementById('focus-input').value = dayData.focus || '';
+
+    const list = document.getElementById('exercise-list');
+    list.innerHTML = '';
+
+    if (dayData.exercises.length === 0) {
+        list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">No hay ejercicios guardados para este día. ¡Añade el primero!</div>';
+        return;
+    }
+
+    dayData.exercises.forEach((ex, exIdx) => {
+        const item = document.createElement('div');
+        item.className = `exercise-item ${ex.done ? 'completed' : ''}`;
+        item.innerHTML = `
+            <div class="exercise-info">
+                <div class="custom-checkbox" onclick="toggleExercise(${exIdx})"></div>
+                <span style="font-weight: 600;">${ex.name}</span>
+            </div>
+            <span class="action-icon" onclick="deleteExercise(${exIdx})">🗑️</span>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function saveDayFocus(val) {
+    data.routines[activeRoutineId].weekly[activeDayIndex].focus = val;
+    saveData();
+}
+
+function addExercise() {
+    const name = prompt('Nombre del ejercicio (Ej: 4x15 Flexiones, 3x20 Sentadillas):');
+    if (!name) return;
+
+    data.routines[activeRoutineId].weekly[activeDayIndex].exercises.push({
+        name: name,
+        done: false
+    });
+    saveData();
+    renderWorkoutDay();
+}
+
+function toggleExercise(idx) {
+    const ex = data.routines[activeRoutineId].weekly[activeDayIndex].exercises[idx];
+    ex.done = !ex.done;
+    saveData();
+    renderWorkoutDay();
+}
+
+function deleteExercise(idx) {
+    data.routines[activeRoutineId].weekly[activeDayIndex].exercises.splice(idx, 1);
+    saveData();
+    renderWorkoutDay();
+}
+
+function finishDay() {
+    const todayStr = new Date().toDateString();
+    if (data.lastCompletedDate === todayStr) return;
+
+    data.streak += 1;
+    data.lastCompletedDate = todayStr;
+    saveData();
+
+    confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#ff5500', '#e63946', '#ffffff']
+    });
+
+    renderStreak();
+    checkTodayStatus();
+}
+
+function startRestTimer(seconds) {
+    clearInterval(timerInterval);
+    let left = seconds;
+    const display = document.getElementById('timer-display');
+    
+    timerInterval = setInterval(() => {
+        left--;
+        const mins = Math.floor(left / 60);
+        const secs = left % 60;
+        display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (left <= 0) {
+            clearInterval(timerInterval);
+            display.innerText = "¡TIEMPO!";
+        }
+    }, 1000);
+}
+
+init();
